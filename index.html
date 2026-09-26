@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Job Finder — Indeed Search Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f16;
+    --bg-raised: #12181f;
+    --line: #232b36;
+    --text: #e9edf3;
+    --text-dim: #8f9bab;
+    --blue: #5b8def;
+    --gold: #cda05a;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    min-height: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  .wrap { width: 100%; max-width: 640px; padding: 48px 24px 64px; }
+  header { margin-bottom: 40px; }
+  .eyebrow { color: var(--gold); font-size: 14px; letter-spacing: 0.02em; margin: 0 0 10px; }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: clamp(32px, 6vw, 44px);
+    line-height: 1.15;
+    margin: 0 0 14px;
+  }
+  header p { color: var(--text-dim); font-size: 16px; line-height: 1.6; max-width: 46ch; margin: 0; }
+
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; margin: 28px 0 36px; }
+  .preset-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+  }
+  .preset-btn:hover { border-color: var(--blue); color: var(--text); }
+
+  form {
+    background: var(--bg-raised);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 28px;
+  }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .field { margin-bottom: 18px; }
+  .field.full { grid-column: 1 / -1; }
+  label { display: block; font-size: 13px; color: var(--text-dim); margin-bottom: 7px; }
+  input[type=text], select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 15px;
+    padding: 11px 12px;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  input[type=text]:focus, select:focus { border-color: var(--blue); }
+  select { appearance: none; }
+
+  .toggle-row { display: flex; align-items: center; gap: 10px; margin: 4px 0 22px; }
+  .toggle-row input { width: 17px; height: 17px; accent-color: var(--blue); }
+  .toggle-row label { margin: 0; color: var(--text); font-size: 14px; }
+
+  .submit {
+    display: block;
+    width: 100%;
+    text-align: center;
+    text-decoration: none;
+    background: var(--blue);
+    color: #08101f;
+    border: none;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 13px;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: filter .15s;
+  }
+  .submit:hover { filter: brightness(1.08); }
+  button.submit:focus-visible, .submit:focus-visible, .preset-btn:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .history { margin-top: 40px; }
+  .history h2 {
+    font-size: 13px;
+    color: var(--text-dim);
+    font-weight: 500;
+    margin: 0 0 14px;
+  }
+  .history-list { display: flex; flex-direction: column; gap: 8px; }
+  a.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    transition: border-color .15s;
+  }
+  .history-item:hover, .history-item:focus-visible { border-color: var(--blue); }
+  .history-item .meta { font-size: 14px; line-height: 1.4; }
+  .history-item .meta span { color: var(--text-dim); font-size: 12px; display: block; margin-top: 2px; }
+  .history-item .go {
+    color: var(--blue);
+    font-size: 13px;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+  .empty { color: var(--text-dim); font-size: 14px; }
+
+  @media (max-width: 480px) {
+    .row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Job search, sorted</p>
+    <h1>Build the exact<br>Indeed search you need</h1>
+    <p>Set your role, location, and filters once — this hands you a clean Indeed results link instead of a generic homepage search, and keeps a running list of what you've searched.</p>
+  </header>
+
+  <div class="presets" id="presets"></div>
+
+  <form id="searchForm">
+    <div class="field full">
+      <label for="q">Job title or keywords</label>
+      <input type="text" id="q" placeholder="Front-End Developer" required>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="l">Location</label>
+        <input type="text" id="l" placeholder="Coimbatore, TN">
+      </div>
+      <div class="field">
+        <label for="fromage">Date posted</label>
+        <select id="fromage">
+          <option value="">Any time</option>
+          <option value="1">Past 24 hours</option>
+          <option value="3">Past 3 days</option>
+          <option value="7" selected>Past week</option>
+          <option value="14">Past 2 weeks</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="jt">Job type</label>
+        <select id="jt">
+          <option value="">Any type</option>
+          <option value="fulltime">Full-time</option>
+          <option value="parttime">Part-time</option>
+          <option value="contract">Contract</option>
+          <option value="internship">Internship</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="explvl">Experience level</label>
+        <select id="explvl">
+          <option value="">Any level</option>
+          <option value="entry_level">Entry level</option>
+          <option value="mid_level">Mid level</option>
+          <option value="senior_level">Senior level</option>
+        </select>
+      </div>
+    </div>
+    <div class="toggle-row">
+      <input type="checkbox" id="remote">
+      <label for="remote">Remote only</label>
+    </div>
+    <a href="#" class="submit" id="goLink" role="button">Open Indeed search →</a>
+  </form>
+
+  <div class="history">
+    <h2>Recent searches</h2>
+    <div class="history-list" id="historyList"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var presets = [
+    { label: 'Front-End Developer', q: 'Front-End Developer React.js' },
+    { label: 'UI/UX Designer', q: 'UI UX Designer' },
+    { label: 'React Developer', q: 'React Developer' },
+    { label: 'Full-Stack (entry level)', q: 'Full Stack Developer', explvl: 'entry_level' }
+  ];
+
+  var presetWrap = document.getElementById('presets');
+  presets.forEach(function (p) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'preset-btn';
+    btn.textContent = p.label;
+    btn.addEventListener('click', function () {
+      document.getElementById('q').value = p.q;
+      if (p.explvl) document.getElementById('explvl').value = p.explvl;
+    });
+    presetWrap.appendChild(btn);
+  });
+
+  function buildUrl(params) {
+    var base = 'https://www.indeed.com/jobs?';
+    var parts = [];
+    if (params.q) parts.push('q=' + encodeURIComponent(params.q));
+    if (params.l) parts.push('l=' + encodeURIComponent(params.l));
+    if (params.fromage) parts.push('fromage=' + encodeURIComponent(params.fromage));
+    if (params.jt) parts.push('jt=' + encodeURIComponent(params.jt));
+    if (params.explvl) parts.push('explvl=' + encodeURIComponent(params.explvl));
+    if (params.remote) parts.push('sc=0kf%3Aattr(DSQF7)%3B');
+    return base + parts.join('&');
+  }
+
+  function loadHistory() {
+    try {
+      return JSON.parse(localStorage.getItem('jobFinderHistory') || '[]');
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveHistory(list) {
+    try {
+      localStorage.setItem('jobFinderHistory', JSON.stringify(list.slice(0, 8)));
+    } catch (e) {}
+  }
+
+  function renderHistory() {
+    var list = loadHistory();
+    var el = document.getElementById('historyList');
+    el.innerHTML = '';
+    if (!list.length) {
+      var empty = document.createElement('p');
+      empty.className = 'empty';
+      empty.textContent = 'Nothing yet — your searches will show up here.';
+      el.appendChild(empty);
+      return;
+    }
+    list.forEach(function (item) {
+      var row = document.createElement('a');
+      row.className = 'history-item';
+      row.href = item.url;
+      var meta = document.createElement('div');
+      meta.className = 'meta';
+      var summary = item.q + (item.l ? ' · ' + item.l : '');
+      meta.innerHTML = summary + '<span>' + item.date + '</span>';
+      var go = document.createElement('span');
+      go.className = 'go';
+      go.textContent = 'Reopen';
+      row.appendChild(meta);
+      row.appendChild(go);
+      el.appendChild(row);
+    });
+  }
+
+  document.getElementById('goLink').addEventListener('click', function (e) {
+    var params = {
+      q: document.getElementById('q').value.trim(),
+      l: document.getElementById('l').value.trim(),
+      fromage: document.getElementById('fromage').value,
+      jt: document.getElementById('jt').value,
+      explvl: document.getElementById('explvl').value,
+      remote: document.getElementById('remote').checked
+    };
+    if (!params.q) { e.preventDefault(); return; }
+    var url = buildUrl(params);
+    var history = loadHistory();
+    history.unshift({
+      q: params.q,
+      l: params.l,
+      url: url,
+      date: new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    });
+    saveHistory(history);
+    renderHistory();
+    this.href = url;
+    this.target = '_blank';
+    // no preventDefault: let the browser handle this as a genuine link tap
+  });
+
+  document.getElementById('searchForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    document.getElementById('goLink').click();
+  });
+
+  renderHistory();
+})();
+</script>
+</body>
+</html>
